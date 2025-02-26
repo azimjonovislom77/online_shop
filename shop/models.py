@@ -1,11 +1,32 @@
 from django.db import models
 from decimal import Decimal
+from django.utils.text import slugify
 
 
 # Create your models here.
 
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
-class Product(models.Model):
+    class Meta:
+        abstract = True
+
+
+class Category(BaseModel):
+    title = models.CharField(max_length=200, unique=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        db_table = 'category'
+        verbose_name = 'category'
+        verbose_name_plural = 'Categories'
+        ordering = ['-id']
+
+
+class Product(BaseModel):
     class RatingChoice(models.IntegerChoices):
         ONE = 1
         TWO = 2
@@ -19,8 +40,8 @@ class Product(models.Model):
     image = models.ImageField(upload_to='images/', null=True, blank=True)
     discount = models.PositiveIntegerField(default=0)
     rating = models.PositiveIntegerField(choices=RatingChoice.choices, default=RatingChoice.ONE.value)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    quantity = models.PositiveIntegerField(default=1)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', null=True, blank=True)
 
     @property
     def discounted_price(self):
@@ -37,8 +58,7 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-    @property
-    def is_discounted(self):
-        if self.discount > 0:
-            return self.discounted_price
-        return self.price
+    class Meta:
+        db_table = 'product'
+
+
