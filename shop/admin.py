@@ -1,20 +1,25 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from shop.models import Product, Category
-
-# Register your models here.
+from shop.models import Category, Product
 
 
-admin.site.register(Category)
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('title', 'id')
+    search_fields = ('title',)
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'image_tag', 'id', 'category', 'price')
+    list_display = ('name', 'id', 'price', 'category', 'display_image')
+    search_fields = ('name',)
+    list_filter = ('category',)
+    list_per_page = 20
+    readonly_fields = ('updated_at',)
 
-    def image_tag(self, obj):
+    def display_image(self, obj):
         if obj.image:
-            return format_html('<img src="{}" width="50" height="50" />'.format(obj.image.url))
-        return 'No Image'
+            return format_html('<img src="{}" width="50" style="border-radius: 5px;"/>', obj.image.url)
+        return "No Image"
 
-    image_tag.short_description = 'Image'
+    display_image.short_description = "Image"

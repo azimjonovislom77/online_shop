@@ -92,6 +92,15 @@
                     </form>
 
                 </div>
+                <div class="d-flex">
+                    <a href="{% url 'update_product' product.pk %}" class="btn btn-primary me-2">Edit</a>
+
+                    <form method="POST" action="{% url 'delete_product' product.pk %}"
+                          onsubmit="return confirm('Delete this product?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

@@ -1,22 +1,30 @@
-from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
 
 from shop.models import Product, Category
+from shop.forms import ProductForm
 
 
 # Create your views here.
 
 
-def index(request):
+def index(request, category_id: int | None = None):
     categories = Category.objects.all()
-    products = Product.objects.all().order_by('-updated_at')  # select * from products order by updated_at DESC
+    if category_id:
+        products = Product.objects.filter(category_id=category_id)
+    else:
+        products = Product.objects.all().order_by('-updated_at')  # select * from products order by updated_at DESC
     context = {
-        'categories': categories,
-        'products': products
+        'products': products,
+        'categories': categories
     }
     return render(request, 'shop/home.html', context)
 
 
 def product_detail(request, product_id):
+    # product = Product.objects.get(id=product_id)
+    # product = Product.objects.filter(id=product_id).first()
+
     product = get_object_or_404(Product, id=product_id)
     context = {
         'product': product
@@ -24,13 +32,47 @@ def product_detail(request, product_id):
     return render(request, 'shop/detail.html', context)
 
 
-def category_products(request, category_id):
-    categories = Category.objects.all()
-    selected_category = get_object_or_404(Category, id=category_id)
-    products = Product.objects.filter(category=selected_category)
+# @login_required(login_url='/admin/')
+# def product_create(request):
+#     form = ProductModelForm()
+#     if request.method == 'POST':
+#         form = ProductModelForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('index')
+#
+#     context = {
+#         'form': form
+#     }
+#     return render(request, 'shop/add-product.html', context)
 
-    return render(request, 'shop/home.html', {
-        'categories': categories,
-        'products': products,
-        'selected_category': selected_category
-    })
+@login_required(login_url='/admin/')
+def product_create(request):
+    if request.method == "POST":
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('index')
+    else:
+        form = ProductForm()
+    return render(request, 'shop/add-product.html', {'form': form})
+
+
+def delete_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    product.delete()
+    return redirect('index')
+
+
+def update_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+
+    if request.method == "POST":
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            form.save()
+            return redirect('product_detail', product_id=product.id)
+    else:
+        form = ProductForm(instance=product)
+
+    return render(request, 'shop/update-product.html', {'form': form, 'product': product})
