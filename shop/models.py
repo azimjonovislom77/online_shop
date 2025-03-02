@@ -1,5 +1,8 @@
-from django.db import models
 from decimal import Decimal
+from django.db import models
+from django.contrib.auth.models import User
+from django.shortcuts import render
+from django.views import View
 
 
 # Create your models here.
@@ -57,3 +60,14 @@ class Product(BaseModel):
 
     class Meta:
         db_table = 'product'
+
+
+class Comment(models.Model):
+    product = models.ForeignKey("shop.Product", on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    name = models.CharField(max_length=100, null=True, blank=True)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name if self.name else self.user.username} - {self.product.name}"

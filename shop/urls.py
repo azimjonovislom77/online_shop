@@ -1,17 +1,14 @@
 from django.contrib import admin
 from django.urls import path
 from shop import views
-from django.conf import settings
-from django.conf.urls.static import static
 
 urlpatterns = [
-    path('home/', views.index, name='index'),
-    path('product-detail/<int:product_id>/', views.product_detail, name='product_detail'),
+    path('product/', views.index, name='index'),
+    path('product/<int:product_id>/', views.product_detail, name='product_detail'),
     path('products-of-category/<int:category_id>/', views.index, name='products_of_category'),
     path('product-create/', views.product_create, name='product_create'),
-    path('product/<int:pk>/delete/', views.delete_product, name='delete_product'),
-    path('product/<int:pk>/update/', views.update_product, name='update_product'),
+    path('product-delete/<int:product_id>/', views.product_delete, name='product_delete'),
+    path('product-update/<int:product_id>/', views.product_update, name='product_update'),
+    path('product/<int:product_id>/add-comment/', views.add_comment, name='add_comment'),
+    path('product/<int:product_id>/comments/', views.comment_list_view, name='comment_list'),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
