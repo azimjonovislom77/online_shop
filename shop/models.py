@@ -1,8 +1,7 @@
-from decimal import Decimal
 from django.db import models
-from django.contrib.auth.models import User
-from django.shortcuts import render
-from django.views import View
+from decimal import Decimal
+
+from django.db.models import Avg
 
 
 # Create your models here.
@@ -29,19 +28,11 @@ class Category(BaseModel):
 
 
 class Product(BaseModel):
-    class RatingChoice(models.IntegerChoices):
-        ONE = 1
-        TWO = 2
-        THREE = 3
-        FOUR = 4
-        FIVE = 5
-
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True, blank=True)
     price = models.DecimalField(max_digits=14, decimal_places=2)
     image = models.ImageField(upload_to='images/', null=True, blank=True, default='images/no_image.png')
     discount = models.PositiveIntegerField(default=0)
-    rating = models.PositiveIntegerField(choices=RatingChoice.choices, default=RatingChoice.ONE.value)
     quantity = models.PositiveIntegerField(default=1)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', null=True, blank=True)
 
@@ -50,6 +41,12 @@ class Product(BaseModel):
         if self.discount > 0:
             self.price = self.price * Decimal(1 - self.discount / 100)
         return Decimal(f'{self.price}').quantize(Decimal('0.00'))
+
+    @property
+    def comment_rating(self):
+        products = self.comments.aggregate(product_avg_rating=Avg('rating'))
+        avg_rating = products['product_avg_rating'] or 0
+        return Decimal(str(avg_rating)).quantize(Decimal('0.000'))
 
     @property
     def get_absolute_url(self):
@@ -62,12 +59,30 @@ class Product(BaseModel):
         db_table = 'product'
 
 
-class Comment(models.Model):
-    product = models.ForeignKey("shop.Product", on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    name = models.CharField(max_length=100, null=True, blank=True)
-    text = models.TextField()
+class Comment(BaseModel):
+    class RatingChoice(models.IntegerChoices):
+        ONE = 1
+        TWO = 2
+        THREE = 3
+        FOUR = 4
+        FIVE = 5
+
+    full_name = models.CharField(max_length=100, null=True, blank=True)
+    email = models.EmailField()
+    content = models.TextField()
+    rating = models.PositiveIntegerField(choices=RatingChoice.choices, default=RatingChoice.ONE.value)
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='comments')
+    is_private = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.email} => {self.rating} => {self.product.name}'
+
+
+class Order(models.Model):
+    full_name = models.CharField(max_length=255)
+    phone = models.CharField(max_length=20)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='orders')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.name if self.name else self.user.username} - {self.product.name}"
+        return f'Order by {self.full_name} for {self.product.name}'

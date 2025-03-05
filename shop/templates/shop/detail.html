@@ -1,5 +1,6 @@
 {% extends 'shop/base/base.html' %}
 {% load static %}
+{% load register_tags %}
 
 {% block title %}
     Product Detail
@@ -65,23 +66,20 @@
                     </div>
                     <p class="lead">{{ product.description }}</p>
                     <div class="d-flex">
-                        <form>
-                            <div class="form-group">
-                                <h2>Place an order</h2>
+                        <form method="post" action="{% url 'place_order' %}">
+                            {% csrf_token %}
+                            <div class="form-group mb-3">
+                                <label for="name">Your name</label>
+                                <input type="text" class="form-control" name="full_name" placeholder="Your name"
+                                       required>
                             </div>
                             <div class="form-group mb-3">
-                                <label for="formGroupExampleInput">Your name</label>
-                                <input type="text" class="form-control" placeholder="Your name">
+                                <label for="phone">Your phone</label>
+                                <input type="text" class="form-control" name="phone" placeholder="Your phone" required>
                             </div>
+                            <input type="hidden" name="product" value="{{ product.id }}">
                             <div class="form-group mb-3">
-                                <label for="formGroupExampleInput2">Your phone</label>
-                                <input type="text" class="form-control" placeholder="Your phone">
-                            </div>
-
-
-                            <div class="form-group mb-3">
-
-                                <input type="text" class="btn btn-success" value="Send">
+                                <button type="submit" class="btn btn-success">Place Order</button>
                             </div>
                         </form>
 
@@ -95,15 +93,27 @@
         <div class="row">
             <div class="col-12">
                 <div class="text-center">
-                    <h2>Latest comments</h2>
+                    <h2>Latest comments ({{ product.comments.count }})</h2>
                 </div>
                 {% for comment in comments %}
                     <div class="media card p-4 mt-2">
                         <div class="media-body">
-                            <h3 class="mt-0 text-center">
-                                {{ comment.name }}
-                            </h3>
-                            <p class="text-center">{{ comment.text }}</p>
+
+                            <div class="d-flex justify-content-lg-start small text-warning mb-2">
+                                {#                                    {% with ''|center:product.rating as range %}#}
+                                {#                                        {% for f in range %}#}
+                                {#                                            <div class="bi-star-fill"></div>#}
+                                {#                                        {% endfor %}#}
+                                {#                                    {% endwith %}#}
+                                {% for _ in comment.rating|get_range %}
+                                    <div class="bi-star-fill"></div>
+                                {% endfor %}
+
+                            </div>
+
+                            <h3 class="mt-0">{{ comment.full_name }}</h3>
+                            <p>{{ comment.content }}</p>
+                            <h5>{{ comment.created_at }}</h5>
                         </div>
                     </div>
                 {% endfor %}
@@ -118,18 +128,35 @@
                         <h3>Add Comment</h3>
                     </div>
 
-                    <form method="post" action="{% url 'add_comment' product.id %}">
+                    <form method="post" action="{% url 'comment_view' product.id %}">
                         {% csrf_token %}
                         <div class="form-group mb-3">
-                            <label for="formGroupExampleInput">Your Name</label>
-                            <input type="text" name="name" class="form-control" placeholder="Your name" required>
+                            <label for="rating">Rating:</label>
+                            <select id="rating" name="rating">
+                                <option value="1">⭐ (1)</option>
+                                <option value="2">⭐⭐ (2)</option>
+                                <option value="3">⭐⭐⭐ (3)</option>
+                                <option value="4">⭐⭐⭐⭐ (4)</option>
+                                <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                            </select>
                         </div>
                         <div class="form-group mb-3">
-                            <label for="formGroupExampleInput2">Your Comment</label>
-                            <textarea name="text" class="form-control" cols="30" rows="5" required></textarea>
+                            <label for="formGroupExampleInput">Your name</label>
+                            <input type="text" class="form-control" name="full_name" placeholder="Your name">
                         </div>
                         <div class="form-group mb-3">
-                            <button type="submit" class="btn btn-success">Send</button>
+                            <label for="formGroupExampleInput2">Your email</label>
+                            <input type="email" name="email" class="form-control" placeholder="Your email">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="formGroupExampleInput2">Your comment</label>
+                            <textarea name="content" class="form-control" id="" cols="30" rows="10"></textarea>
+                        </div>
+
+                        <div class="form-group mb-3">
+
+                            <input type="submit" class="btn btn-success" value="Send">
                         </div>
                     </form>
 

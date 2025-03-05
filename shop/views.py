@@ -1,11 +1,9 @@
-from django.contrib.auth.models import User
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views import View
-
-from shop.models import Product, Category, Comment
-from shop.forms import ProductForm, ProductModelForm
+from django.contrib import messages
+from shop.models import Product, Category
+from shop.forms import ProductModelForm, CommentModelForm, OrderForm
 
 
 # Create your views here.
@@ -29,17 +27,15 @@ def index(request, category_id: int | None = None):
 
 
 def product_detail(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
     categories = Category.objects.all()
-    comments = Comment.objects.filter(product=product)
-
+    product = get_object_or_404(Product, id=product_id)
+    comments = product.comments.all()
     context = {
         'product': product,
         'categories': categories,
         'comments': comments
     }
     return render(request, 'shop/detail.html', context)
-
 
 
 # @login_required(login_url='/admin/')
@@ -58,7 +54,7 @@ def product_detail(request, product_id):
 
 @login_required(login_url='/admin/')
 def product_create(request):
-    form = ProductForm()
+    form = ProductModelForm()
     if request.method == 'POST':
         form = ProductModelForm(request.POST, request.FILES)
         if form.is_valid():
@@ -99,26 +95,36 @@ def product_delete(request, product_id):
     return render(request, 'shop/detail.html', {'product': product})
 
 
-def add_comment(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
-
-    if request.method == "POST":
-        name = request.POST.get("name")
-        text = request.POST.get("text")
-
-        if name and text:
-            comment = Comment.objects.create(
-                product=product,
-                name=name,
-                text=text
-            )
+def comment_view(request, pk):
+    product = Product.objects.get(id=pk)
+    form = CommentModelForm()
+    if request.method == 'POST':
+        form = CommentModelForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            rating = request.POST.get('rating')
+            print(type(rating))
+            comment.rating = rating
+            comment.product = product
             comment.save()
+            return redirect('product_detail', product.id)
 
-    return redirect("product_detail", product_id=product.id)
+    context = {
+        'form': form,
+        'product': product
+    }
+
+    return render(request, 'shop/detail.html', context)
 
 
-def comment_list_view(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
-    comments = Comment.objects.filter(product=product)
+def place_order(request):
+    if request.method == 'POST':
+        form = OrderForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your order has been placed successfully!')
+            return redirect('index')
+    else:
+        form = OrderForm()
 
-    return render(request, 'shop/detail.html', {'product': product, 'comments': comments})
+    return render(request, 'shop/detail.html', {'form': form})
