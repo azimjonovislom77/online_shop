@@ -3,7 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from shop.models import Product, Category
-from shop.forms import ProductModelForm, CommentModelForm, OrderForm
+from shop.forms import ProductModelForm, CommentModelForm, OrderModelForm
+from django.db.models import Avg
 
 
 # Create your views here.
@@ -29,11 +30,14 @@ def index(request, category_id: int | None = None):
 def product_detail(request, product_id):
     categories = Category.objects.all()
     product = get_object_or_404(Product, id=product_id)
+    related_products = Product.objects.all().annotate(rating_avg=Avg('comments__rating')).filter(
+        category=product.category).exclude(id=product.id).order_by('-rating_avg')
     comments = product.comments.all()
     context = {
         'product': product,
         'categories': categories,
-        'comments': comments
+        'comments': comments,
+        'related_products': related_products
     }
     return render(request, 'shop/detail.html', context)
 
@@ -117,14 +121,31 @@ def comment_view(request, pk):
     return render(request, 'shop/detail.html', context)
 
 
-def place_order(request):
+def order_view(request, pk):
+    product = Product.objects.get(id=pk)
+    form = OrderModelForm()
     if request.method == 'POST':
-        form = OrderForm(request.POST)
+        form = OrderModelForm(request.POST)
+        quantity = int(request.POST.get('quantity'))
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Your order has been placed successfully!')
-            return redirect('index')
-    else:
-        form = OrderForm()
-
-    return render(request, 'shop/detail.html', {'form': form})
+            if product.quantity >= quantity:
+                order = form.save(commit=False)
+                order.product = product
+                product.quantity = product.quantity - quantity
+                product.save()
+                order.save()
+                # message success
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    'Order successfully created'
+                )
+                return redirect('product_detail', product.id)
+            else:
+                # error message
+                messages.add_message(
+                    request,
+                    messages.ERROR,
+                    'Something is wrong'
+                )
+    return render(request, 'shop/detail.html', {'form': form, 'product': product})

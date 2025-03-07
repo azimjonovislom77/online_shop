@@ -1,7 +1,7 @@
 from django.db import models
-from decimal import Decimal
-
+from decimal import Decimal, getcontext
 from django.db.models import Avg
+from phonenumber_field.modelfields import PhoneNumberField
 
 
 # Create your models here.
@@ -45,8 +45,9 @@ class Product(BaseModel):
     @property
     def comment_rating(self):
         products = self.comments.aggregate(product_avg_rating=Avg('rating'))
-        avg_rating = products['product_avg_rating'] or 0
-        return Decimal(str(avg_rating)).quantize(Decimal('0.000'))
+        if products['product_avg_rating'] is None:
+            return 0
+        return Decimal(f'{products['product_avg_rating']}').quantize(Decimal('0.000'))
 
     @property
     def get_absolute_url(self):
@@ -78,11 +79,11 @@ class Comment(BaseModel):
         return f'{self.email} => {self.rating} => {self.product.name}'
 
 
-class Order(models.Model):
-    full_name = models.CharField(max_length=255)
-    phone = models.CharField(max_length=20)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='orders')
-    created_at = models.DateTimeField(auto_now_add=True)
+class Order(BaseModel):
+    full_name = models.CharField(max_length=255, null=True, blank=True)
+    phone = PhoneNumberField(region='UZ')
+    quantity = models.PositiveIntegerField(default=1)
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='orders')
 
     def __str__(self):
-        return f'Order by {self.full_name} for {self.product.name}'
+        return f'{self.phone} - {self.product.name}'
