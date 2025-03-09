@@ -9,6 +9,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    my_order = models.PositiveIntegerField(default=0, null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -46,8 +47,8 @@ class Product(BaseModel):
     def comment_rating(self):
         products = self.comments.aggregate(product_avg_rating=Avg('rating'))
         if products['product_avg_rating'] is None:
-            return 0
-        return Decimal(f'{products['product_avg_rating']}').quantize(Decimal('0.000'))
+            return Decimal('0.000')
+        return Decimal(str(products['product_avg_rating'])).quantize(Decimal('0.000'))
 
     @property
     def get_absolute_url(self):
@@ -58,6 +59,7 @@ class Product(BaseModel):
 
     class Meta:
         db_table = 'product'
+        ordering = ['my_order']
 
 
 class Comment(BaseModel):

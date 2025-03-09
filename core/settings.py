@@ -28,7 +28,32 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+JAZZMIN_SETTINGS = {
+    "site_title": "Online Shop Admin",
+    "site_header": "Online Shop",
+    "site_brand": "Online Shop",
+    "welcome_sign": "Online Shop Admin Paneliga Xush Kelibsiz",
+    "search_model": "shop.Product",
+    "topmenu_links": [
+        {"name": "Bosh sahifa", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"model": "shop.Product"},
+    ],
+    "usermenu_links": [
+        {"name": "Rasmiy sayt", "url": "https://yourwebsite.com", "new_window": True},
+    ],
+    "icons": {
+        "auth.User": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "shop.Product": "fas fa-box",
+        "shop.Category": "fas fa-tags",
+        "shop.Comment": "fas fa-comments",
+        "shop.Order": "fas fa-shopping-cart",
+    },
+    "order_with_respect_to": ["auth", "shop.Product", "shop.Category"],
+}
+
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -37,6 +62,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'shop.apps.ShopConfig',
     'phonenumber_field',
+    'adminsortable2',
+    'import_export',
+
 ]
 
 MIDDLEWARE = [
@@ -115,10 +143,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'shop/static')
-# STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, 'static')
-# ]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'shop/static')
+]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'shop/media')
