@@ -28,30 +28,6 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-JAZZMIN_SETTINGS = {
-    "site_title": "Online Shop Admin",
-    "site_header": "Online Shop",
-    "site_brand": "Online Shop",
-    "welcome_sign": "Online Shop Admin Paneliga Xush Kelibsiz",
-    "search_model": "shop.Product",
-    "topmenu_links": [
-        {"name": "Bosh sahifa", "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"model": "shop.Product"},
-    ],
-    "usermenu_links": [
-        {"name": "Rasmiy sayt", "url": "https://yourwebsite.com", "new_window": True},
-    ],
-    "icons": {
-        "auth.User": "fas fa-user",
-        "auth.Group": "fas fa-users",
-        "shop.Product": "fas fa-box",
-        "shop.Category": "fas fa-tags",
-        "shop.Comment": "fas fa-comments",
-        "shop.Order": "fas fa-shopping-cart",
-    },
-    "order_with_respect_to": ["auth", "shop.Product", "shop.Category"],
-}
-
 INSTALLED_APPS = [
     'jazzmin',
     'django.contrib.admin',
@@ -64,6 +40,7 @@ INSTALLED_APPS = [
     'phonenumber_field',
     'adminsortable2',
     'import_export',
+    'users.apps.UsersConfig',
 
 ]
 
@@ -113,20 +90,8 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+AUTH_PASSWORD_VALIDATORS = []
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -155,3 +120,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'shop/media')
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'users.CustomUser'
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Online Shop Admin",
+    "site_header": "Online Shop",
+    "welcome_sign": "Online Shop boshqaruv paneli",
+    "topmenu_links": [
+        {"name": "Bosh sahifa", "url": "admin:index", "permissions": ["auth.view_user"]},
+    ],
+}

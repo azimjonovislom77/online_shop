@@ -2,6 +2,7 @@ from django.db import models
 from decimal import Decimal, getcontext
 from django.db.models import Avg
 from phonenumber_field.modelfields import PhoneNumberField
+from django.contrib.auth import get_user_model
 
 
 # Create your models here.
@@ -62,6 +63,9 @@ class Product(BaseModel):
         ordering = ['my_order']
 
 
+User = get_user_model()
+
+
 class Comment(BaseModel):
     class RatingChoice(models.IntegerChoices):
         ONE = 1
@@ -70,6 +74,7 @@ class Comment(BaseModel):
         FOUR = 4
         FIVE = 5
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments', null=True, blank=True)
     full_name = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField()
     content = models.TextField()

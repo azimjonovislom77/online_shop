@@ -111,6 +111,7 @@ def product_delete(request, product_id):
     return render(request, 'shop/detail.html', {'product': product})
 
 
+@login_required(login_url='/users/login/')
 def comment_view(request, pk):
     product = Product.objects.get(id=pk)
     form = CommentModelForm()
@@ -118,21 +119,17 @@ def comment_view(request, pk):
         form = CommentModelForm(request.POST)
         if form.is_valid():
             comment = form.save(commit=False)
-            rating = request.POST.get('rating')
-            print(type(rating))
-            comment.rating = rating
             comment.product = product
+            comment.email = request.user.email
+            comment.full_name = f"{request.user.first_name} {request.user.last_name}"
             comment.save()
-            return redirect('product_detail', product.id)
+            return redirect('shop:product_detail', product.id)
 
-    context = {
-        'form': form,
-        'product': product
-    }
-
+    context = {'form': form, 'product': product}
     return render(request, 'shop/detail.html', context)
 
 
+@login_required(login_url='/users/login/')
 def order_view(request, pk):
     product = Product.objects.get(id=pk)
     form = OrderModelForm()
@@ -146,15 +143,13 @@ def order_view(request, pk):
                 product.quantity = product.quantity - quantity
                 product.save()
                 order.save()
-                # message success
                 messages.add_message(
                     request,
                     messages.SUCCESS,
                     'Order successfully created'
                 )
-                return redirect('product_detail', product.id)
+                return redirect("shop:product_detail", product.id)
             else:
-                # error message
                 messages.add_message(
                     request,
                     messages.ERROR,
